@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP · Тоног төхөөрөмжийн засвар үйлчилгээ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0A1420;
+    --bg-panel:#111F30;
+    --bg-panel-2:#16283B;
+    --bg-raised:#1C3049;
+    --line:#26405C;
+    --line-soft:#1D3049;
+    --text-1:#E9EFF5;
+    --text-2:#9FB2C6;
+    --text-3:#68809A;
+    --amber:#F2A63A;
+    --amber-dim:#5A4322;
+    --teal:#2FBFAE;
+    --teal-dim:#123B37;
+    --red:#E1543A;
+    --red-dim:#4A241C;
+    --blue:#4C8DFF;
+    --mono:'IBM Plex Mono', monospace;
+    --sans:'IBM Plex Sans', sans-serif;
+    --disp:'Oswald', sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg-deep);
+    color:var(--text-1);
+    font-family:var(--sans);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--amber); color:#1a1200;}
+
+  /* ===== App shell ===== */
+  .app{display:flex; min-height:100vh;}
+
+  /* ---- Sidebar ---- */
+  .sidebar{
+    width:230px; flex-shrink:0;
+    background:linear-gradient(180deg,#0D1928,#0A1420 70%);
+    border-right:1px solid var(--line-soft);
+    display:flex; flex-direction:column;
+    padding:22px 0;
+  }
+  .brand{padding:0 20px 22px 20px; border-bottom:1px solid var(--line-soft); margin-bottom:14px;}
+  .brand-mark{
+    display:flex; align-items:center; gap:9px; margin-bottom:10px;
+  }
+  .brand-dot{
+    width:11px; height:11px; border-radius:50%;
+    background:var(--teal); box-shadow:0 0 10px var(--teal);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.45;}}
+  .brand-title{font-family:var(--disp); font-size:15px; letter-spacing:.06em; font-weight:600; text-transform:uppercase;}
+  .brand-sub{font-size:11px; color:var(--text-3); font-family:var(--mono); letter-spacing:.03em;}
+
+  .nav{display:flex; flex-direction:column; gap:2px; padding:0 10px;}
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:10px 12px; border-radius:6px;
+    color:var(--text-2); text-decoration:none; cursor:pointer;
+    font-size:13.5px; font-weight:500;
+    border:1px solid transparent;
+    transition:background .15s, color .15s;
+    user-select:none;
+  }
+  .nav-item svg{width:16px; height:16px; flex-shrink:0; opacity:.8;}
+  .nav-item:hover{background:var(--bg-panel-2); color:var(--text-1);}
+  .nav-item.active{
+    background:var(--bg-raised); color:var(--amber);
+    border-color:var(--line);
+  }
+  .nav-item.active svg{opacity:1;}
+  .nav-eyebrow{
+    font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--text-3);
+    text-transform:uppercase; padding:16px 22px 6px;
+  }
+
+  .sidebar-foot{
+    margin-top:auto; padding:16px 20px 0; border-top:1px solid var(--line-soft);
+  }
+  .plant-status{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); margin-top:14px;}
+  .plant-status b{color:var(--teal); font-family:var(--mono); font-weight:500;}
+
+  /* ---- Main ---- */
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px; border-bottom:1px solid var(--line-soft);
+    background:rgba(10,20,32,.6); backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:5;
+  }
+  .topbar h1{font-family:var(--disp); font-size:20px; font-weight:600; letter-spacing:.01em;}
+  .topbar .sub{color:var(--text-3); font-size:12.5px; margin-top:2px;}
+  .topbar-right{display:flex; align-items:center; gap:14px;}
+  .clock{font-family:var(--mono); font-size:12.5px; color:var(--text-2); text-align:right;}
+  .btn{
+    font-family:var(--sans); font-weight:600; font-size:12.5px;
+    padding:9px 16px; border-radius:6px; border:1px solid var(--line);
+    background:var(--bg-raised); color:var(--text-1); cursor:pointer;
+    transition:border-color .15s, transform .1s;
+  }
+  .btn:hover{border-color:var(--amber);}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--amber); color:#1A1200; border-color:var(--amber);}
+  .btn-primary:hover{filter:brightness(1.08); border-color:var(--amber);}
+
+  .view{padding:26px 28px 60px; display:none;}
+  .view.active{display:block; animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ===== Dashboard ===== */
+  .kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .kpi{
+    background:var(--bg-panel); border:1px solid var(--line-soft); border-radius:10px;
+    padding:18px 18px 16px;
+  }
+  .kpi-label{font-size:11.5px; color:var(--text-3); text-transform:uppercase; letter-spacing:.07em; font-family:var(--mono);}
+  .kpi-value{font-family:var(--disp); font-size:34px; font-weight:600; margin-top:6px; line-height:1;}
+  .kpi-value.amber{color:var(--amber);}
+  .kpi-value.teal{color:var(--teal);}
+  .kpi-value.red{color:var(--red);}
+  .kpi-delta{font-size:12px; color:var(--text-2); margin-top:6px;}
+
+  .grid-2{display:grid; grid-template-columns:1.15fr .85fr; gap:16px;}
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--line-soft); border-radius:10px;
+    padding:20px;
+  }
+  .panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .panel-title{font-family:var(--disp); font-size:15px; letter-spacing:.02em; font-weight:600; text-transform:uppercase;}
+  .panel-title span{color:var(--text-3); font-weight:400; font-family:var(--mono); font-size:11px; text-transform:none; margin-left:8px;}
+
+  .gauge-wrap{display:flex; align-items:center; gap:24px; justify-content:center; padding:6px 0 4px;}
+  .gauge-legend{display:flex; flex-direction:column; gap:9px;}
+  .legend-row{display:flex; align-items:center; gap:9px; font-size:12.5px;}
+  .legend-dot{width:9px; height:9px; border-radius:2px;}
+  .legend-count{font-family:var(--mono); color:var(--text-2); margin-left:auto; padding-left:14px;}
+
+  .mini-list{display:flex; flex-direction:column; gap:0;}
+  .mini-row{
+    display:flex; align-items:center; gap:12px; padding:10px 0;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .mini-row:last-child{border-bottom:none; padding-bottom:0;}
+  .mini-row:first-child{padding-top:0;}
+  .mini-tag{
+    font-family:var(--mono); font-size:10.5px; color:var(--text-3);
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:4px;
+    padding:2px 6px; flex-shrink:0;
+  }
+  .mini-body{flex:1; min-width:0;}
+  .mini-title{font-size:13px; font-weight:500;}
+  .mini-sub{font-size:11.5px; color:var(--text-3); margin-top:1px;}
+  .mini-days{font-family:var(--mono); font-size:12px; flex-shrink:0; text-align:right;}
+  .mini-days.overdue{color:var(--red);}
+  .mini-days.soon{color:var(--amber);}
+  .mini-days.ok{color:var(--text-2);}
+
+  /* ===== Status pill ===== */
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+    padding:4px 9px; border-radius:20px; font-family:var(--sans);
+    white-space:nowrap;
+  }
+  .pill::before{content:''; width:6px; height:6px; border-radius:50%;}
+  .pill.ok{background:var(--teal-dim); color:var(--teal);} .pill.ok::before{background:var(--teal);}
+  .pill.warn{background:var(--amber-dim); color:var(--amber);} .pill.warn::before{background:var(--amber);}
+  .pill.crit{background:var(--red-dim); color:var(--red);} .pill.crit::before{background:var(--red);}
+  .pill.pending{background:#26344a; color:var(--text-2);} .pill.pending::before{background:var(--text-2);}
+  .pill.progress{background:#1c3049; color:var(--blue);} .pill.progress::before{background:var(--blue);}
+
+  /* ===== Table ===== */
+  .table-wrap{background:var(--bg-panel); border:1px solid var(--line-soft); border-radius:10px; overflow:hidden;}
+  table{width:100%; border-collapse:collapse;}
+  thead th{
+    text-align:left; font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-3); padding:12px 16px; border-bottom:1px solid var(--line-soft); background:var(--bg-panel-2);
+    font-weight:500;
+  }
+  tbody td{padding:13px 16px; border-bottom:1px solid var(--line-soft); font-size:13px; vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr{cursor:pointer; transition:background .12s;}
+  tbody tr:hover{background:var(--bg-panel-2);}
+  .cell-id{font-family:var(--mono); font-size:12px; color:var(--text-2);}
+  .cell-name{font-weight:600;}
+  .cell-sub{color:var(--text-3); font-size:11.5px; margin-top:2px;}
+
+  .toolbar{display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+  .toolbar input[type=text]{
+    flex:1; min-width:180px; background:var(--bg-panel); border:1px solid var(--line);
+    color:var(--text-1); padding:9px 13px; border-radius:6px; font-family:var(--sans); font-size:13px;
+  }
+  .toolbar input[type=text]::placeholder{color:var(--text-3);}
+  .chip-filter{display:flex; gap:6px; flex-wrap:wrap;}
+  .chip{
+    font-size:12px; padding:7px 12px; border-radius:20px; border:1px solid var(--line);
+    background:var(--bg-panel); color:var(--text-2); cursor:pointer; font-weight:500;
+  }
+  .chip.active{background:var(--bg-raised); color:var(--amber); border-color:var(--amber);}
+
+  /* ===== Mini gauge (equipment health) ===== */
+  .health{display:flex; align-items:center; gap:8px;}
+  .health-track{width:64px; height:6px; border-radius:4px; background:var(--bg-panel-2); overflow:hidden;}
+  .health-fill{height:100%; border-radius:4px;}
+  .health-num{font-family:var(--mono); font-size:11.5px; color:var(--text-2); width:30px;}
+
+  /* ===== Detail drawer ===== */
+  .overlay{
+    position:fixed; inset:0; background:rgba(5,10,18,.6); backdrop-filter:blur(2px);
+    display:none; z-index:40; align-items:stretch; justify-content:flex-end;
+  }
+  .overlay.active{display:flex;}
+  .drawer{
+    width:420px; max-width:92vw; background:var(--bg-panel); border-left:1px solid var(--line);
+    padding:26px; overflow-y:auto; animation:slidein .22s ease;
+  }
+  @keyframes slidein{from{transform:translateX(24px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+  .drawer-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;}
+  .drawer-close{background:none; border:none; color:var(--text-3); font-size:20px; cursor:pointer; line-height:1;}
+  .drawer h2{font-family:var(--disp); font-size:21px; font-weight:600; margin-top:2px;}
+  .drawer-meta{color:var(--text-3); font-family:var(--mono); font-size:11.5px; margin-top:3px;}
+  .drawer-section{margin-top:22px;}
+  .drawer-section h3{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-3); font-family:var(--mono); margin-bottom:10px;}
+  .kv-row{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line-soft); font-size:13px;}
+  .kv-row span:first-child{color:var(--text-2);}
+  .hist-item{padding:10px 0; border-bottom:1px solid var(--line-soft);}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-top{display:flex; justify-content:space-between; font-size:12.5px; font-weight:600;}
+  .hist-date{font-family:var(--mono); color:var(--text-3); font-weight:400;}
+  .hist-desc{font-size:12.5px; color:var(--text-2); margin-top:3px;}
+
+  /* ===== Modal (new work order) ===== */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(5,10,18,.7); backdrop-filter:blur(2px);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{
+    width:520px; max-width:100%; background:var(--bg-panel); border:1px solid var(--line);
+    border-radius:12px; padding:26px; animation:slidein .2s ease;
+  }
+  .modal h2{font-family:var(--disp); font-size:19px; margin-bottom:4px;}
+  .modal .sub{color:var(--text-3); font-size:12.5px; margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; color:var(--text-2); margin-bottom:6px; font-weight:500;}
+  .field select, .field input, .field textarea{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-1);
+    padding:10px 12px; border-radius:6px; font-family:var(--sans); font-size:13px;
+  }
+  .field textarea{resize:vertical; min-height:64px;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
+
+  /* ===== Calendar / PM schedule ===== */
+  .freq-groups{display:flex; flex-direction:column; gap:18px;}
+  .freq-group h3{
+    font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--amber); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+  }
+  .freq-group h3::before{content:''; width:14px; height:1px; background:var(--amber);}
+  .task-card{
+    background:var(--bg-panel); border:1px solid var(--line-soft); border-radius:8px;
+    padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:8px;
+  }
+  .task-card .mini-body{flex:1;}
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--text-3);
+  }
+  .empty-state svg{width:38px; height:38px; opacity:.4; margin-bottom:12px;}
+
+  .footnote{
+    margin-top:26px; padding:14px 16px; border:1px dashed var(--line); border-radius:8px;
+    color:var(--text-3); font-size:12px; background:var(--bg-panel);
+  }
+  .footnote b{color:var(--text-2);}
+
+  @media(max-width:900px){
+    .kpi-row{grid-template-columns:1fr 1fr;}
+    .grid-2{grid-template-columns:1fr;}
+    .sidebar{width:76px;}
+    .brand-title,.brand-sub,.nav-item span,.nav-eyebrow,.plant-status{display:none;}
+    .nav-item{justify-content:center;}
+    .drawer{width:100vw;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <span class="brand-dot"></span>
+        <span class="brand-title">ERP · EAM</span>
+      </div>
+      <div class="brand-sub">ЭРЧИМ ХҮЧНИЙ СТАНЦ</div>
+    </div>
+
+    <div class="nav-eyebrow">Засвар үйлчилгээ</div>
+    <nav class="nav">
+      <div class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>Хяналтын самбар</span>
+      </div>
+      <div class="nav-item" data-view="equipment">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Тоног төхөөрөмж</span>
+      </div>
+      <div class="nav-item" data-view="workorders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+        <span>Ажлын захиалга</span>
+      </div>
+      <div class="nav-item" data-view="pm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span>Урьдчилсан хуваарь</span>
+      </div>
+      <div class="nav-item" data-view="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>
+        <span>Түүх</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="plant-status">
+        <span class="brand-dot" style="width:7px;height:7px;"></span>
+        Систем: <b>Онлайн</b>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="viewTitle">Хяналтын самбар</h1>
+        <div class="sub" id="viewSub">Тоног төхөөрөмжийн засвар үйлчилгээний ERP модуль — demo орчин</div>
+      </div>
+      <div class="topbar-right">
+        <div class="clock" id="clock">—</div>
+        <button class="btn btn-primary" onclick="openModal()">+ Ажлын захиалга үүсгэх</button>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="view active" id="view-dashboard">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Нийт тоног төхөөрөмж</div>
+          <div class="kpi-value" id="kpiTotal">—</div>
+          <div class="kpi-delta">8 үндсэн байгууламжид байршилтай</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Хэвийн ажиллагаатай</div>
+          <div class="kpi-value teal" id="kpiOk">—</div>
+          <div class="kpi-delta" id="kpiOkPct">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Хугацаа хэтэрсэн ажил</div>
+          <div class="kpi-value red" id="kpiOverdue">—</div>
+          <div class="kpi-delta">Нэн даруй хуваарилах шаардлагатай</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Энэ сард дуусгасан</div>
+          <div class="kpi-value amber" id="kpiDone">—</div>
+          <div class="kpi-delta">Урьдчилсан + засварын ажлууд</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Ойртож буй засвар <span>дараагийн 14 хоног</span></div>
+          </div>
+          <div class="mini-list" id="upcomingList"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Төхөөрөмжийн төлөв</div>
+          </div>
+          <div class="gauge-wrap">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="58" fill="none" stroke="#16283B" stroke-width="16"/>
+              <g id="statusRing" transform="rotate(-90 70 70)"></g>
+              <text x="70" y="65" text-anchor="middle" font-family="Oswald" font-size="26" fill="#E9EFF5" font-weight="600" id="ringTotal">—</text>
+              <text x="70" y="82" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#68809A">НЭГЖ</text>
+            </svg>
+            <div class="gauge-legend" id="statusLegend"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:16px;"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Сүүлийн ажлын захиалгын хөдөлгөөн</div>
+        </div>
+        <div class="mini-list" id="recentWO"></div>
+      </div>
+
+      <div class="footnote">
+        <b>Demo тухай:</b> Энэ бол SAP PM / Oracle EAM / Odoo Maintenance зэрэг ERP системд нэвтрүүлэх тоног төхөөрөмжийн засвар үйлчилгээний модулийн интерактив загвар (mock-up) юм. Бодит нэвтрүүлэлтэд SCADA/DCS-аас сенсорын дата, нөөцийн бараа материалын модуль, болон ажилтны хуваарийн систем API-аар холбогдоно.
+      </div>
+    </section>
+
+    <!-- ===== EQUIPMENT ===== -->
+    <section class="view" id="view-equipment">
+      <div class="toolbar">
+        <input type="text" id="eqSearch" placeholder="Тоног төхөөрөмж хайх (нэр, ID, байршил)...">
+        <div class="chip-filter" id="eqFilter">
+          <div class="chip active" data-status="all">Бүгд</div>
+          <div class="chip" data-status="ok">Хэвийн</div>
+          <div class="chip" data-status="warn">Анхаарал</div>
+          <div class="chip" data-status="crit">Зогссон</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Тоног төхөөрөмж</th><th>Байршил</th><th>Төлөв</th><th>Эрүүл байдал</th><th>Дараагийн засвар</th>
+            </tr>
+          </thead>
+          <tbody id="eqTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== WORK ORDERS ===== -->
+    <section class="view" id="view-workorders">
+      <div class="toolbar">
+        <input type="text" id="woSearch" placeholder="Ажлын захиалга хайх...">
+        <div class="chip-filter" id="woFilter">
+          <div class="chip active" data-status="all">Бүгд</div>
+          <div class="chip" data-status="pending">Хүлээгдэж буй</div>
+          <div class="chip" data-status="progress">Хийгдэж буй</div>
+          <div class="chip" data-status="done">Дууссан</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Захиалга №</th><th>Тоног төхөөрөмж</th><th>Төрөл</th><th>Ажилтан</th><th>Хугацаа</th><th>Төлөв</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="woTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== PM SCHEDULE ===== -->
+    <section class="view" id="view-pm">
+      <div class="freq-groups" id="pmGroups"></div>
+    </section>
+
+    <!-- ===== HISTORY ===== -->
+    <section class="view" id="view-history">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Огноо</th><th>Тоног төхөөрөмж</th><th>Төрөл</th><th>Гүйцэтгэсэн ажилтан</th><th>Тайлбар</th></tr>
+          </thead>
+          <tbody id="histTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== Equipment detail drawer ===== -->
+<div class="overlay" id="drawerOverlay" onclick="if(event.target===this) closeDrawer()">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-meta" id="drawerId">—</div>
+        <h2 id="drawerName">—</h2>
+        <div class="drawer-meta" id="drawerLoc">—</div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div class="drawer-section">
+      <h3>Ерөнхий мэдээлэл</h3>
+      <div class="kv-row"><span>Төлөв</span><span id="drawerStatus"></span></div>
+      <div class="kv-row"><span>Эрүүл байдал</span><span id="drawerHealth"></span></div>
+      <div class="kv-row"><span>Ашиглалтад орсон</span><span id="drawerInstalled"></span></div>
+      <div class="kv-row"><span>Дараагийн засвар</span><span id="drawerNext"></span></div>
+    </div>
+
+    <div class="drawer-section">
+      <h3>Засварын түүх</h3>
+      <div id="drawerHistory"></div>
+    </div>
+
+    <div class="drawer-section">
+      <button class="btn btn-primary" style="width:100%;" id="drawerNewWO">+ Энэ төхөөрөмжид ажлын захиалга үүсгэх</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== New Work Order modal ===== -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <h2>Шинэ ажлын захиалга</h2>
+    <div class="sub">Засвар үйлчилгээний хүсэлт бүртгэх</div>
+
+    <div class="field">
+      <label>Тоног төхөөрөмж</label>
+      <select id="formEquip"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Төрөл</label>
+        <select id="formType">
+          <option>Урьдчилан сэргийлэх</option>
+          <option>Засварын</option>
+          <option>Яаралтай</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Урьтамж</label>
+        <select id="formPriority">
+          <option>Бага</option>
+          <option selected>Дунд</option>
+          <option>Өндөр</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Хариуцах ажилтан</label>
+        <select id="formTech"></select>
+      </div>
+      <div class="field">
+        <label>Дуусах хугацаа</label>
+        <input type="date" id="formDate">
+      </div>
+    </div>
+    <div class="field">
+      <label>Тайлбар</label>
+      <textarea id="formDesc" placeholder="Ажлын дэлгэрэнгүй тайлбар..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Цуцлах</button>
+      <button class="btn btn-primary" onclick="createWorkOrder()">Захиалга үүсгэх</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ DATA MODEL (in-memory, demo only) ============ */
+const technicians = ["Б.Ганбаатар","Д.Оюунчимэг","Т.Мөнхбат","С.Энхжаргал","Ц.Батжаргал"];
+
+let equipment = [
+  {id:"ТЭД-1", name:"Уурын турбин №1", loc:"Турбины танхим", status:"ok", health:88, installed:"2011-03", next:"2026-09-02",
+    history:[{date:"2026-06-14",type:"Урьдчилан сэргийлэх",tech:"Т.Мөнхбат",desc:"Тосолгооны систем шалгалт, вибраци хэмжилт"},
+             {date:"2026-02-02",type:"Засварын",tech:"Б.Ганбаатар",desc:"Холхивчийн температур хэвийн бус — солилт хийсэн"}]},
+  {id:"ГЕН-1", name:"Цахилгаан генератор №1", loc:"Турбины танхим", status:"ok", health:81, installed:"2011-03", next:"2026-09-10",
+    history:[{date:"2026-05-20",type:"Урьдчилан сэргийлэх",tech:"С.Энхжаргал",desc:"Изоляцийн эсэргүүцэл хэмжилт хийсэн"}]},
+  {id:"ЗУУХ-1", name:"Уурын зуух №1", loc:"Зуухны цех", status:"warn", health:63, installed:"2009-11", next:"2026-08-21",
+    history:[{date:"2026-07-01",type:"Урьдчилан сэргийлэх",tech:"Д.Оюунчимэг",desc:"Гадаргуугийн зэврэлт илэрсэн — хяналтад авсан"},
+             {date:"2026-03-15",type:"Засварын",tech:"Т.Мөнхбат",desc:"Шатаах насос сэлбэглэсэн"}]},
+  {id:"ТРАНС-01", name:"Хүчний трансформатор №1", loc:"Дэд станц", status:"ok", health:92, installed:"2015-06", next:"2026-10-05",
+    history:[{date:"2026-04-10",type:"Урьдчилан сэргийлэх",tech:"Ц.Батжаргал",desc:"Тос сорьц шинжилгээ — үзүүлэлт хэвийн"}]},
+  {id:"ШАХУУР-3", name:"Тэжээлийн насос №3", loc:"Насосны станц", status:"crit", health:31, installed:"2008-02", next:"2026-08-18",
+    history:[{date:"2026-08-05",type:"Яаралтай",tech:"Б.Ганбаатар",desc:"Хүчтэй чичиргээ илэрч, ажиллагааг зогсоосон"},
+             {date:"2025-12-20",type:"Урьдчилан сэргийлэх",tech:"С.Энхжаргал",desc:"Тагжийн бүрдэл шалгалт"}]},
+  {id:"КОНД-1", name:"Конденсатор №1", loc:"Турбины танхим", status:"ok", health:76, installed:"2011-03", next:"2026-09-28",
+    history:[{date:"2026-01-18",type:"Урьдчилан сэргийлэх",tech:"Т.Мөнхбат",desc:"Хоолойн цэвэрлэгээ хийсэн"}]},
+  {id:"ШАХУУР-7", name:"Хөргөлтийн насос №7", loc:"Насосны станц", status:"warn", health:58, installed:"2013-09", next:"2026-08-24",
+    history:[{date:"2026-06-30",type:"Засварын",tech:"Д.Оюунчимэг",desc:"Дугуйны холхивч сэлбэглэсэн"}]},
+  {id:"ТРАНС-02", name:"Туслах трансформатор №2", loc:"Дэд станц", status:"ok", health:85, installed:"2016-01", next:"2026-11-02",
+    history:[{date:"2026-05-05",type:"Урьдчилан сэргийлэх",tech:"Ц.Батжаргал",desc:"Салгуур, залгуурын үзлэг"}]},
+];
+
+let workOrders = [
+  {no:"WO-2026-0142", eqId:"ШАХУУР-3", type:"Яаралтай", tech:"Б.Ганбаатар", due:"2026-08-18", status:"progress", desc:"Хүчтэй чичиргээ — яаралтай үзлэг шаардлагатай"},
+  {no:"WO-2026-0141", eqId:"ЗУУХ-1", type:"Урьдчилан сэргийлэх", tech:"Д.Оюунчимэг", due:"2026-08-21", status:"pending", desc:"Гадаргуугийн зэврэлтийн эсрэг арга хэмжээ"},
+  {no:"WO-2026-0140", eqId:"ШАХУУР-7", type:"Засварын", tech:"Т.Мөнхбат", due:"2026-08-24", status:"pending", desc:"Холхивч дахин шалгах"},
+  {no:"WO-2026-0139", eqId:"ТЭД-1", type:"Урьдчилан сэргийлэх", tech:"Т.Мөнхбат", due:"2026-06-14", status:"done", desc:"Улирлын тос сэлбэг"},
+  {no:"WO-2026-0138", eqId:"ГЕН-1", type:"Урьдчилан сэргийлэх", tech:"С.Энхжаргал", due:"2026-05-20", status:"done", desc:"Изоляцийн хэмжилт"},
+  {no:"WO-2026-0137", eqId:"ТРАНС-01", type:"Урьдчилан сэргийлэх", tech:"Ц.Батжаргал", due:"2026-04-10", status:"done", desc:"Тос шинжилгээ"},
+  {no:"WO-2026-0136", eqId:"КОНД-1", type:"Урьдчилан сэргийлэх", tech:"Т.Мөнхбат", due:"2026-08-30", status:"pending", desc:"Хоолойн ээлжит цэвэрлэгээ"},
+];
+
+let woCounter = 143;
+
+const pmSchedule = [
+  {freq:"Сар бүр", tasks:[
+    {eq:"ТЭД-1", label:"Вибраци хэмжилт, тосолгооны түвшин шалгах"},
+    {eq:"ШАХУУР-3", label:"Тагжийн бүрдэл, чичиргээ хэмжилт"},
+    {eq:"ШАХУУР-7", label:"Холхивчийн температур шалгах"},
+  ]},
+  {freq:"Улирал тутам", tasks:[
+    {eq:"ЗУУХ-1", label:"Гадаргуугийн зэврэлт, дулаан алдагдлын үзлэг"},
+    {eq:"ГЕН-1", label:"Изоляцийн эсэргүүцэл хэмжилт"},
+    {eq:"КОНД-1", label:"Хоолойн дотор цэвэрлэгээ"},
+  ]},
+  {freq:"Жил бүр", tasks:[
+    {eq:"ТРАНС-01", label:"Тосны бүрэн шинжилгээ, DGA тест"},
+    {eq:"ТРАНС-02", label:"Салгуур, залгуурын иж бүрэн үзлэг"},
+  ]},
+];
+
+/* ============ HELPERS ============ */
+const statusLabel = {ok:"Хэвийн", warn:"Анхаарал", crit:"Зогссон"};
+const woStatusLabel = {pending:"Хүлээгдэж буй", progress:"Хийгдэж буй", done:"Дууссан"};
+const healthColor = h => h>=70 ? "#2FBFAE" : h>=45 ? "#F2A63A" : "#E1543A";
+const eqById = id => equipment.find(e=>e.id===id);
+
+function daysUntil(dateStr){
+  const today = new Date("2026-08-17");
+  const d = new Date(dateStr);
+  return Math.round((d-today)/86400000);
+}
+function fmtDays(n){
+  if(n<0) return {text:`${Math.abs(n)} хоног хэтэрсэн`, cls:"overdue"};
+  if(n===0) return {text:"Өнөөдөр", cls:"overdue"};
+  if(n<=5) return {text:`${n} хоногийн дараа`, cls:"soon"};
+  return {text:`${n} хоногийн дараа`, cls:"ok"};
+}
+
+/* ============ NAV ============ */
+const titles = {
+  dashboard:["Хяналтын самбар","Тоног төхөөрөмжийн засвар үйлчилгээний ERP модуль — demo орчин"],
+  equipment:["Тоног төхөөрөмж","Станцын бүх тоног төхөөрөмжийн бүртгэл, эрүүл байдал"],
+  workorders:["Ажлын захиалга","Засварын хүсэлт, хуваарилалт, гүйцэтгэлийн явц"],
+  pm:["Урьдчилан сэргийлэх хуваарь","Давтамжаар зохион байгуулсан урьдчилсан засварын төлөвлөгөө"],
+  history:["Гүйцэтгэлийн түүх","Дуусгасан бүх засвар үйлчилгээний тэмдэглэл"],
+};
+document.querySelectorAll(".nav-item").forEach(item=>{
+  item.addEventListener("click", ()=>{
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    item.classList.add("active");
+    const v = item.dataset.view;
+    document.querySelectorAll(".view").forEach(s=>s.classList.remove("active"));
+    document.getElementById("view-"+v).classList.add("active");
+    document.getElementById("viewTitle").textContent = titles[v][0];
+    document.getElementById("viewSub").textContent = titles[v][1];
+  });
+});
+
+/* ============ CLOCK ============ */
+function tickClock(){
+  const now = new Date();
+  const opts = {hour:'2-digit', minute:'2-digit', second:'2-digit'};
+  document.getElementById("clock").innerHTML = "2026.08.17 &nbsp;·&nbsp; " + now.toLocaleTimeString('mn-MN', opts);
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ============ RENDER: DASHBOARD ============ */
+function renderDashboard(){
+  const total = equipment.length;
+  const ok = equipment.filter(e=>e.status==="ok").length;
+  const warn = equipment.filter(e=>e.status==="warn").length;
+  const crit = equipment.filter(e=>e.status==="crit").length;
+  const overdue = workOrders.filter(w=>w.status!=="done" && daysUntil(w.due)<0).length;
+  const doneThisMonth = workOrders.filter(w=>w.status==="done").length;
+
+  document.getElementById("kpiTotal").textContent = total;
+  document.getElementById("kpiOk").textContent = ok;
+  document.getElementById("kpiOkPct").textContent = Math.round(ok/total*100)+"% нийт багцаас";
+  document.getElementById("kpiOverdue").textContent = overdue;
+  document.getElementById("kpiDone").textContent = doneThisMonth;
+
+  // status ring
+  const ring = document.getElementById("statusRing");
+  const R = 58, C = 2*Math.PI*R;
+  let offset = 0; ring.innerHTML = "";
+  [["ok",ok,"#2FBFAE"],["warn",warn,"#F2A63A"],["crit",crit,"#E1543A"]].forEach(([key,count,color])=>{
+    if(count===0) return;
+    const frac = count/total;
+    const dash = frac*C;
+    const circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    circle.setAttribute("cx",70); circle.setAttribute("cy",70); circle.setAttribute("r",R);
+    circle.setAttribute("fill","none"); circle.setAttribute("stroke",color);
+    circle.setAttribute("stroke-width",16);
+    circle.setAttribute("stroke-dasharray", `${dash} ${C-dash}`);
+    circle.setAttribute("stroke-dashoffset", -offset);
+    circle.style.transition = "stroke-dasharray .6s ease";
+    ring.appendChild(circle);
+    offset += dash;
+  });
+  document.getElementById("ringTotal").textContent = total;
+  document.getElementById("statusLegend").innerHTML = [
+    ["#2FBFAE","Хэвийн",ok], ["#F2A63A","Анхаарал",warn], ["#E1543A","Зогссон",crit]
+  ].map(([c,l,n])=>`<div class="legend-row"><span class="legend-dot" style="background:${c}"></span>${l}<span class="legend-count">${n}</span></div>`).join("");
+
+  // upcoming
+  const upcoming = equipment.slice().sort((a,b)=>daysUntil(a.next)-daysUntil(b.next)).slice(0,6);
+  document.getElementById("upcomingList").innerHTML = upcoming.map(e=>{
+    const d = fmtDays(daysUntil(e.next));
+    return `<div class="mini-row">
+      <span class="mini-tag">${e.id}</span>
+      <div class="mini-body"><div class="mini-title">${e.name}</div><div class="mini-sub">${e.loc}</div></div>
+      <div class="mini-days ${d.cls}">${d.text}</div>
+    </div>`;
+  }).join("");
+
+  // recent WO
+  const recent = workOrders.slice().sort((a,b)=> a.no < b.no ? 1 : -1).slice(0,6);
+  document.getElementById("recentWO").innerHTML = recent.map(w=>{
+    const eq = eqById(w.eqId);
+    return `<div class="mini-row">
+      <span class="mini-tag">${w.no}</span>
+      <div class="mini-body"><div class="mini-title">${eq ? eq.name : w.eqId}</div><div class="mini-sub">${w.type} · ${w.tech}</div></div>
+      <span class="pill ${w.status}">${woStatusLabel[w.status]}</span>
+    </div>`;
+  }).join("");
+}
+
+/* ============ RENDER: EQUIPMENT TABLE ============ */
+let eqFilterState = "all", eqSearchState = "";
+function renderEquipment(){
+  const rows = equipment.filter(e=>{
+    if(eqFilterState!=="all" && e.status!==eqFilterState) return false;
+    const q = eqSearchState.toLowerCase();
+    if(q && !(e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q) || e.loc.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  document.getElementById("eqTableBody").innerHTML = rows.map(e=>{
+    const d = fmtDays(daysUntil(e.next));
+    return `<tr onclick="openDrawer('${e.id}')">
+      <td class="cell-id">${e.id}</td>
+      <td class="cell-name">${e.name}</td>
+      <td>${e.loc}</td>
+      <td><span class="pill ${e.status}">${statusLabel[e.status]}</span></td>
+      <td><div class="health"><div class="health-track"><div class="health-fill" style="width:${e.health}%; background:${healthColor(e.health)}"></div></div><span class="health-num">${e.health}%</span></div></td>
+      <td class="${d.cls==='overdue'?'':''}" style="color:${d.cls==='overdue'?'#E1543A':d.cls==='soon'?'#F2A63A':'inherit'}">${e.next} <span style="color:var(--text-3); font-size:11px;">(${d.text})</span></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="6"><div class="empty-state">Илэрц олдсонгүй</div></td></tr>`;
+}
+document.getElementById("eqSearch").addEventListener("input", e=>{eqSearchState=e.target.value; renderEquipment();});
+document.getElementById("eqFilter").addEventListener("click", e=>{
+  const chip = e.target.closest(".chip"); if(!chip) return;
+  document.querySelectorAll("#eqFilter .chip").forEach(c=>c.classList.remove("active"));
+  chip.classList.add("active"); eqFilterState = chip.dataset.status; renderEquipment();
+});
+
+/* ============ RENDER: WORK ORDERS ============ */
+let woFilterState="all", woSearchState="";
+function renderWorkOrders(){
+  const rows = workOrders.filter(w=>{
+    if(woFilterState!=="all" && w.status!==woFilterState) return false;
+    const q = woSearchState.toLowerCase();
+    if(q){
+      const eq = eqById(w.eqId);
+      const hay = (w.no+" "+w.type+" "+w.tech+" "+(eq?eq.name:"")).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> a.no < b.no ? 1 : -1);
+
+  document.getElementById("woTableBody").innerHTML = rows.map(w=>{
+    const eq = eqById(w.eqId);
+    const d = fmtDays(daysUntil(w.due));
+    const nextStatus = w.status==="pending" ? "progress" : w.status==="progress" ? "done" : null;
+    const btnLabel = w.status==="pending" ? "Эхлүүлэх" : w.status==="progress" ? "Дуусгах" : "✓ Дууссан";
+    return `<tr>
+      <td class="cell-id">${w.no}</td>
+      <td><div class="cell-name">${eq ? eq.name : w.eqId}</div><div class="cell-sub">${eq ? eq.loc : ""}</div></td>
+      <td>${w.type}</td>
+      <td>${w.tech}</td>
+      <td style="color:${w.status!=='done' && d.cls==='overdue' ? '#E1543A' : 'inherit'}">${w.due}</td>
+      <td><span class="pill ${w.status}">${woStatusLabel[w.status]}</span></td>
+      <td>${nextStatus ? `<button class="btn" onclick="advanceWO('${w.no}')">${btnLabel}</button>` : `<span style="color:var(--text-3); font-size:12px;">${btnLabel}</span>`}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="7"><div class="empty-state">Илэрц олдсонгүй</div></td></tr>`;
+}
+document.getElementById("woSearch").addEventListener("input", e=>{woSearchState=e.target.value; renderWorkOrders();});
+document.getElementById("woFilter").addEventListener("click", e=>{
+  const chip = e.target.closest(".chip"); if(!chip) return;
+  document.querySelectorAll("#woFilter .chip").forEach(c=>c.classList.remove("active"));
+  chip.classList.add("active"); woFilterState = chip.dataset.status; renderWorkOrders();
+});
+function advanceWO(no){
+  const w = workOrders.find(x=>x.no===no);
+  if(!w) return;
+  if(w.status==="pending") w.status="progress";
+  else if(w.status==="progress") w.status="done";
+  renderWorkOrders(); renderDashboard(); renderHistory();
+}
+
+/* ============ RENDER: PM SCHEDULE ============ */
+function renderPM(){
+  document.getElementById("pmGroups").innerHTML = pmSchedule.map(g=>`
+    <div class="freq-group">
+      <h3>${g.freq}</h3>
+      ${g.tasks.map(t=>{
+        const eq = eqById(t.eq);
+        return `<div class="task-card">
+          <span class="mini-tag">${t.eq}</span>
+          <div class="mini-body"><div class="mini-title">${t.label}</div><div class="mini-sub">${eq?eq.name+" · "+eq.loc:""}</div></div>
+          <span class="pill ${eq?eq.status:'ok'}">${eq?statusLabel[eq.status]:''}</span>
+        </div>`;
+      }).join("")}
+    </div>
+  `).join("");
+}
+
+/* ============ RENDER: HISTORY ============ */
+function renderHistory(){
+  let rows = [];
+  equipment.forEach(e=> e.history.forEach(h=> rows.push({...h, eqName:e.name, eqLoc:e.loc})));
+  workOrders.filter(w=>w.status==="done").forEach(w=>{
+    const eq = eqById(w.eqId);
+    rows.push({date:w.due, type:w.type, tech:w.tech, desc:w.desc, eqName:eq?eq.name:w.eqId, eqLoc:eq?eq.loc:""});
+  });
+  rows.sort((a,b)=> a.date < b.date ? 1 : -1);
+  document.getElementById("histTableBody").innerHTML = rows.map(r=>`
+    <tr>
+      <td class="cell-id">${r.date}</td>
+      <td><div class="cell-name">${r.eqName}</div><div class="cell-sub">${r.eqLoc}</div></td>
+      <td>${r.type}</td>
+      <td>${r.tech}</td>
+      <td style="color:var(--text-2)">${r.desc}</td>
+    </tr>`).join("");
+}
+
+/* ============ DRAWER ============ */
+function openDrawer(id){
+  const e = eqById(id); if(!e) return;
+  document.getElementById("drawerId").textContent = e.id;
+  document.getElementById("drawerName").textContent = e.name;
+  document.getElementById("drawerLoc").textContent = e.loc;
+  document.getElementById("drawerStatus").innerHTML = `<span class="pill ${e.status}">${statusLabel[e.status]}</span>`;
+  document.getElementById("drawerHealth").innerHTML = `<div class="health" style="justify-content:flex-end;"><div class="health-track"><div class="health-fill" style="width:${e.health}%; background:${healthColor(e.health)}"></div></div><span class="health-num">${e.health}%</span></div>`;
+  document.getElementById("drawerInstalled").textContent = e.installed;
+  const d = fmtDays(daysUntil(e.next));
+  document.getElementById("drawerNext").innerHTML = `${e.next} <span style="color:${d.cls==='overdue'?'#E1543A':d.cls==='soon'?'#F2A63A':'var(--text-3)'}">(${d.text})</span>`;
+  document.getElementById("drawerHistory").innerHTML = e.history.map(h=>`
+    <div class="hist-item">
+      <div class="hist-top"><span>${h.type}</span><span class="hist-date">${h.date}</span></div>
+      <div class="hist-desc">${h.desc} — ${h.tech}</div>
+    </div>`).join("") || `<div class="hist-sub" style="color:var(--text-3); font-size:12.5px;">Түүх алга байна</div>`;
+  document.getElementById("drawerNewWO").onclick = ()=>{ closeDrawer(); openModal(id); };
+  document.getElementById("drawerOverlay").classList.add("active");
+}
+function closeDrawer(){ document.getElementById("drawerOverlay").classList.remove("active"); }
+
+/* ============ MODAL ============ */
+function openModal(presetEqId){
+  const sel = document.getElementById("formEquip");
+  sel.innerHTML = equipment.map(e=>`<option value="${e.id}" ${e.id===presetEqId?"selected":""}>${e.id} — ${e.name}</option>`).join("");
+  const tsel = document.getElementById("formTech");
+  tsel.innerHTML = technicians.map(t=>`<option>${t}</option>`).join("");
+  document.getElementById("formDate").value = "2026-08-25";
+  document.getElementById("formDesc").value = "";
+  document.getElementById("modalOverlay").classList.add("active");
+}
+function closeModal(){ document.getElementById("modalOverlay").classList.remove("active"); }
+function createWorkOrder(){
+  const eqId = document.getElementById("formEquip").value;
+  const type = document.getElementById("formType").value;
+  const tech = document.getElementById("formTech").value;
+  const due = document.getElementById("formDate").value || "2026-08-25";
+  const desc = document.getElementById("formDesc").value || "Тайлбар оруулаагүй";
+  const no = `WO-2026-${String(woCounter++).padStart(4,"0")}`;
+  workOrders.unshift({no, eqId, type, tech, due, status:"pending", desc});
+  closeModal();
+  renderDashboard(); renderWorkOrders(); renderHistory();
+  // jump to work orders view
+  document.querySelector('.nav-item[data-view="workorders"]').click();
+}
+
+/* ============ INIT ============ */
+renderDashboard(); renderEquipment(); renderWorkOrders(); renderPM(); renderHistory();
+</script>
+</body>
+</html>
